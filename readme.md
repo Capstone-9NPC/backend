@@ -1,3 +1,4 @@
+```
 backend/
 ├── src/
 │ ├── config/
@@ -29,3 +30,4 @@ backend/
 ├── .gitignore
 ├── package.json
 └── server.js ← entry point
+```
