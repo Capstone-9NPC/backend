@@ -75,10 +75,10 @@ export const report = pgTable('report', {
   adminId: uuid('adminId').references(() => admin.id, { onDelete: 'cascade' }),
   reportCode: varchar('reportCode', { length: 255 }).notNull().unique(),
   incident: varchar('incident', { length: 255 }).notNull(),
-  date: date('date').notNull(),
+  date: timestamp('date').notNull(),
   location: varchar('location', { length: 255 }).notNull(),
   incidentDesc: text('incidentDesc').notNull(),
-  perpretatorDesc: text('perpretatorDesc').notNull(),
+  perpetratorDesc: text('perpetratorDesc').notNull(),
   status: reportStatusEnum('status').notNull().default('RECEIVED'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt')
@@ -99,6 +99,13 @@ export const evidenceAsset = pgTable('evidence_asset', {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export const evidenceAssetRelations = relations(evidenceAsset, ({ one }) => ({
+  report: one(report, {
+    fields: [evidenceAsset.reportId],
+    references: [report.id],
+  }),
+}));
 
 export const reportRelations = relations(report, ({ one, many }) => ({
   user: one(user, {

@@ -7,21 +7,15 @@ import {
   signUp,
   updatePasswordUser,
 } from '../controllers/auth.controller';
-import { validate } from '../middlewares/validation.middleware';
 import { requireAuth } from '../middlewares/auth.middleware';
-import {
-  signInSchema,
-  signUpSchema,
-  updatePasswordSchema,
-} from '../utils/validators/auth.validator';
 
 const router = Router();
 
 // Endpoint untuk registrasi (sign-up)
-router.post('/sign-up', validate(signUpSchema), signUp);
+router.post('/sign-up', signUp);
 
 // Endpoint untuk login (sign-in)
-router.post('/sign-in', validate(signInSchema), signIn);
+router.post('/sign-in', signIn);
 
 // Endpoint untuk logout (sign-out)
 router.post('/sign-out', requireAuth, signOut);
@@ -33,11 +27,6 @@ router.get('/get-user', requireAuth, getCurrentUser);
 router.get('/get-session', requireAuth, getCurrentSession);
 
 // Endpoint untuk memperbarui password pengguna
-router.post(
-  '/update-password',
-  requireAuth,
-  validate(updatePasswordSchema),
-  updatePasswordUser,
-);
+router.post('/update-password', requireAuth, updatePasswordUser);
 
 export default router;

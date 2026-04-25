@@ -3,6 +3,13 @@ import { db } from '../db/index';
 import { report, evidenceAsset } from '../db/schema';
 import { nanoid } from 'nanoid';
 import supabase from '../config/supabase';
+import { and, eq, sql } from 'drizzle-orm';
+import {
+  createReportSchema,
+  getAllReportsSchema,
+  generateUploadSignedUrlSchema,
+  getReportByIdSchema,
+} from '../utils/validators/report.validator';
 
 export const createReport = async (
   req: Request,
@@ -14,9 +21,9 @@ export const createReport = async (
     date,
     location,
     incidentDesc,
-    perpretatorDesc,
+    perpetratorDesc,
     evidencePaths,
-  } = req.body;
+  } = createReportSchema.parse(req.body);
 
   try {
     // Menggunakan transaksi untuk memastikan integritas data
@@ -31,7 +38,7 @@ export const createReport = async (
           date: date,
           location: location,
           incidentDesc: incidentDesc,
-          perpretatorDesc: perpretatorDesc,
+          perpetratorDesc: perpetratorDesc,
         })
         .returning();
 
@@ -91,12 +98,14 @@ export const createReport = async (
   }
 };
 
-export const getPresignedUrl = async (
+export const generateUploadSignedUrl = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const { fileName, fileType, fileSize } = req.body;
+  const { fileName, fileType, fileSize } = generateUploadSignedUrlSchema.parse(
+    req.body,
+  );
   const userId = req.user!.id;
   const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-]/g, '_');
 
@@ -116,10 +125,123 @@ export const getPresignedUrl = async (
       success: true,
       message: 'Presigned URL berhasil dibuat',
       data: {
-        // URL ini yang digunakan klien untuk mengunggah file
         uploadUrl: data.signedUrl,
-        // Path ini yang harus disimpan klien dan dikirim saat membuat laporan
-        path: data.path,
+        path: data.path, // Path ini yang harus disimpan klien dan dikirim saat membuat laporan
+        token: data.token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReportById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const { id } = getReportByIdSchema.parse(req.params);
+  const userId = req.user!.id;
+
+  try {
+    const reportData = await db.query.report.findFirst({
+      where: and(eq(report.id, id), eq(report.userId, userId)),
+      with: {
+        evidenceAssets: true,
+      },
+    });
+
+    if (!reportData) {
+      return res.status(404).json({
+        success: false,
+        message: 'Laporan tidak ditemukan atau Anda tidak memiliki akses',
+      });
+    }
+
+    const pathsToSign = reportData.evidenceAssets.map(
+      (asset) => asset.evidencePath,
+    );
+
+    let finalEvidenceAssets = reportData.evidenceAssets.map((asset) => ({
+      ...asset,
+      signedUrl: null as string | null, // Default null untuk TypeScript
+    }));
+
+    if (pathsToSign.length > 0) {
+      const { data, error } = await supabase.storage
+        .from('evidence_assets')
+        .createSignedUrls(pathsToSign, 60);
+
+      if (error) {
+        console.error('Gagal membuat bulk signed URLs:', error.message);
+      } else if (data) {
+        finalEvidenceAssets = reportData.evidenceAssets.map((asset) => {
+          // Cari data URL dari Supabase yang path-nya cocok
+          const matchedUrlData = data.find(
+            (d) => d.path === asset.evidencePath,
+          );
+
+          return {
+            ...asset,
+            signedUrl: matchedUrlData?.signedUrl || null,
+          };
+        });
+      }
+    }
+
+    const responseData = {
+      ...reportData,
+      evidenceAssets: finalEvidenceAssets,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Laporan berhasil diambil',
+      data: responseData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllReports = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const { page, limit } = getAllReportsSchema.parse(req.query);
+
+  const userId = req.user!.id;
+  const offset = (page - 1) * limit;
+
+  try {
+    const reports = await db.query.report.findMany({
+      where: eq(report.userId, userId),
+      limit: limit,
+      offset: offset,
+      orderBy: (reports, { desc }) => [desc(reports.createdAt)],
+      with: {
+        evidenceAssets: true,
+      },
+    });
+
+    const [totalResult] = await db
+      .select({ count: sql<number>`cast(count(${report.id}) as int)` })
+      .from(report)
+      .where(eq(report.userId, userId));
+
+    const total = totalResult.count;
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Laporan berhasil diambil',
+      data: reports,
+      pagination: {
+        size: limit,
+        page: page,
+        total: total,
+        totalPages: totalPages,
       },
     });
   } catch (error) {

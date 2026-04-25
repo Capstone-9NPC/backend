@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import {
   createReport,
-  getPresignedUrl,
+  getAllReports,
+  generateUploadSignedUrl,
+  getReportById,
 } from '../controllers/report.controller';
-import { validate } from '../middlewares/validation.middleware';
-import {
-  createReportSchema,
-  getPresignedUrlSchema,
-} from '../utils/validators/report.validator';
 
 const router = Router();
 
-router.post('/create', validate(createReportSchema), createReport);
+router.post('/create', createReport);
 
-router.post('/presigned-url', validate(getPresignedUrlSchema), getPresignedUrl);
+router.post('/upload-signed-url', generateUploadSignedUrl);
+
+router.get('/:id', getReportById);
+
+router.get('/', getAllReports);
 
 export default router;

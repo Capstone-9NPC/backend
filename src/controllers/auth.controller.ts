@@ -1,12 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
+import {
+  signInSchema,
+  signUpSchema,
+  updatePasswordSchema,
+} from '../utils/validators/auth.validator';
 
 export const signUp = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const { email, password } = req.body;
+  const { email, password } = signUpSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -32,7 +37,7 @@ export const signIn = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { email, password } = req.body;
+  const { email, password } = signInSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -119,7 +124,8 @@ export const updatePasswordUser = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { newPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } =
+    updatePasswordSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.updateUser({

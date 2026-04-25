@@ -5,16 +5,16 @@ export const createReportSchema = z.object({
   date: z.coerce.date('Format tanggal tidak valid'),
   location: z.string().min(1, 'Lokasi harus diisi').trim(),
   incidentDesc: z.string().min(1, 'Deskripsi insiden harus diisi').trim(),
-  perpretatorDesc: z
+  perpetratorDesc: z
     .string()
-    .min(1, 'Deskripsi perpretator harus diisi')
+    .min(1, 'Deskripsi perpetrator harus diisi')
     .trim(),
   evidencePaths: z
     .array(z.string().min(1, 'Path bukti harus diisi'))
     .optional(),
 });
 
-export const getPresignedUrlSchema = z.object({
+export const generateUploadSignedUrlSchema = z.object({
   fileName: z.string().min(1, 'Nama file harus diisi').trim(),
   fileType: z.enum(
     [
@@ -30,4 +30,20 @@ export const getPresignedUrlSchema = z.object({
     },
   ),
   fileSize: z.number().max(10 * 1024 * 1024, 'Ukuran file maksimal 10MB'), // Maksimal 10MB
+});
+
+export const getReportByIdSchema = z.object({
+  id: z.uuid('ID harus berupa UUID valid').min(1, 'ID harus diisi').trim(),
+});
+
+export const getAllReportsSchema = z.object({
+  page: z.coerce
+    .number('Halaman harus berupa angka')
+    .min(1, 'Halaman harus lebih besar dari 0')
+    .default(1),
+  limit: z.coerce
+    .number('Limit harus berupa angka')
+    .min(1, 'Limit harus lebih besar dari 0')
+    .max(100, 'Limit maksimal adalah 100')
+    .default(10),
 });
