@@ -1,36 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
+import { User } from '@supabase/supabase-js';
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: any; // Ganti 'any' dengan tipe data yang sesuai jika Anda memiliki tipe pengguna khusus
+    export interface Request {
+      user?: User;
     }
   }
 }
 
-export const authMiddleware = async (
+export const requireAuth = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization;
+  const jwt = req.headers.authorization?.split(' ')[1];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token otentikasi tidak ditemukan' });
+  const { data, error } = await supabase.auth.getUser(jwt);
+
+  if (error || !data.user) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
+  req.user = data.user;
+  next();
+};
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
+export const requireAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const jwt = req.headers.authorization?.split(' ')[1];
 
-  if (error || !user) {
-    return res.status(401).json({ error: 'Token otentikasi tidak valid' });
+  const { data, error } = await supabase.auth.getUser(jwt);
+
+  if (error || !data.user) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  req.user = user;
+  const { data: profileData, error: profileError } = await supabase
+    .from('admin')
+    .select()
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError || !profileData) {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
+
+  req.user = data.user;
   next();
 };

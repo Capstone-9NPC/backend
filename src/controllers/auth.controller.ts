@@ -1,16 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
+import {
+  signInSchema,
+  signUpSchema,
+  updatePasswordSchema,
+} from '../utils/validators/auth.validator';
 
 export const signUp = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password harus diisi' });
-  }
+  const { email, password } = signUpSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -36,11 +37,7 @@ export const signIn = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password harus diisi' });
-  }
+  const { email, password } = signInSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -127,15 +124,12 @@ export const updatePasswordUser = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ error: 'Password harus diisi' });
-  }
+  const { currentPassword, newPassword, confirmPassword } =
+    updatePasswordSchema.parse(req.body);
 
   try {
     const { data, error } = await supabase.auth.updateUser({
-      password: password,
+      password: newPassword,
     });
 
     if (error) return next(error);

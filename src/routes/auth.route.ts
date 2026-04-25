@@ -7,6 +7,7 @@ import {
   signUp,
   updatePasswordUser,
 } from '../controllers/auth.controller';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -17,15 +18,15 @@ router.post('/sign-up', signUp);
 router.post('/sign-in', signIn);
 
 // Endpoint untuk logout (sign-out)
-router.post('/sign-out', signOut);
+router.post('/sign-out', requireAuth, signOut);
 
 // Endpoint untuk mendapatkan informasi pengguna saat ini
-router.get('/get-user', getCurrentUser);
+router.get('/get-user', requireAuth, getCurrentUser);
 
 // Endpoint untuk mendapatkan informasi sesi saat ini
-router.get('/get-session', getCurrentSession);
+router.get('/get-session', requireAuth, getCurrentSession);
 
 // Endpoint untuk memperbarui password pengguna
-router.post('/update-password', updatePasswordUser);
+router.post('/update-password', requireAuth, updatePasswordUser);
 
 export default router;

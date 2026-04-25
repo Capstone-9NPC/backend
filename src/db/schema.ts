@@ -8,6 +8,7 @@ import {
   smallint,
   boolean,
   pgEnum,
+  date,
 } from 'drizzle-orm/pg-core';
 
 export const reportStatusEnum = pgEnum('report_status_enum', [
@@ -17,6 +18,7 @@ export const reportStatusEnum = pgEnum('report_status_enum', [
   'ASSISTANCE',
   'REJECTED',
   'DONE',
+  'CANCELLED',
 ]);
 
 export const user = pgTable('user', {
@@ -38,10 +40,10 @@ export const user = pgTable('user', {
 
 export const admin = pgTable('admin', {
   id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }),
   profilePicture: text('profilePicture'),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  unit: varchar('unit', { length: 255 }).notNull(),
+  unit: varchar('unit', { length: 255 }),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt')
     .notNull()
@@ -77,7 +79,7 @@ export const report = pgTable('report', {
   date: timestamp('date').notNull(),
   location: varchar('location', { length: 255 }).notNull(),
   incidentDesc: text('incidentDesc').notNull(),
-  perpretatorDesc: text('perpreatorDesc').notNull(),
+  perpetratorDesc: text('perpetratorDesc').notNull(),
   status: reportStatusEnum('status').notNull().default('RECEIVED'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt')
@@ -98,6 +100,13 @@ export const evidenceAsset = pgTable('evidence_asset', {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
+
+export const evidenceAssetRelations = relations(evidenceAsset, ({ one }) => ({
+  report: one(report, {
+    fields: [evidenceAsset.reportId],
+    references: [report.id],
+  }),
+}));
 
 export const reportRelations = relations(report, ({ one, many }) => ({
   user: one(user, {
