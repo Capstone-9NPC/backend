@@ -43,10 +43,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('API is running...');
+  res.status(200).json({
+    success: true,
+    message: 'Selamat datang di API SafeSpace',
+  });
 });
 
 app.use('/api', appRoutes);
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Error tertangkap di Global Handler:', err);
@@ -76,3 +81,4 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // });
 
 export default app;
+module.exports = app;
