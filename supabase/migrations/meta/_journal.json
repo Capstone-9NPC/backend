@@ -15,6 +15,13 @@
       "when": 1777101232349,
       "tag": "0001_true_prism",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777116091899,
+      "tag": "0002_cooing_ezekiel",
+      "breakpoints": true
     }
   ]
 }

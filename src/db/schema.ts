@@ -8,6 +8,7 @@ import {
   smallint,
   boolean,
   pgEnum,
+  date,
 } from 'drizzle-orm/pg-core';
 
 export const reportStatusEnum = pgEnum('report_status_enum', [
@@ -74,10 +75,10 @@ export const report = pgTable('report', {
   adminId: uuid('adminId').references(() => admin.id, { onDelete: 'cascade' }),
   reportCode: varchar('reportCode', { length: 255 }).notNull().unique(),
   incident: varchar('incident', { length: 255 }).notNull(),
-  date: timestamp('date').notNull(),
+  date: date('date').notNull(),
   location: varchar('location', { length: 255 }).notNull(),
   incidentDesc: text('incidentDesc').notNull(),
-  perpretatorDesc: text('perpreatorDesc').notNull(),
+  perpretatorDesc: text('perpretatorDesc').notNull(),
   status: reportStatusEnum('status').notNull().default('RECEIVED'),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt')

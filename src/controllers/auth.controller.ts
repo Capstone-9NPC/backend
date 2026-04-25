@@ -8,10 +8,6 @@ export const signUp = async (
 ) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password harus diisi' });
-  }
-
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -37,10 +33,6 @@ export const signIn = async (
   next: NextFunction,
 ) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password harus diisi' });
-  }
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -127,15 +119,11 @@ export const updatePasswordUser = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ error: 'Password harus diisi' });
-  }
+  const { newPassword } = req.body;
 
   try {
     const { data, error } = await supabase.auth.updateUser({
-      password: password,
+      password: newPassword,
     });
 
     if (error) return next(error);
